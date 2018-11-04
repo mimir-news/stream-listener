@@ -17,7 +17,9 @@ export MQ_PORT=5672
 export HEARTBEAT_FILE=/tmp/stream-listener-health.txt
 export HEARTBEAT_INTERVAL=20
 
-VERSION=3.0
+NAME = $(shell appv name)
+IMAGE = $(shell appv image)
+VERSION = $(shell appv version)
 
 run:
 	sh start.sh
@@ -38,4 +40,7 @@ install:
 	pip install -r requirements.txt
 
 build:
-	docker build -t eu.gcr.io/mimir-185212/stream-listener:$(VERSION) .
+	docker build -t $(IMAGE) .
+
+build-test:
+	docker build -t "$(NAME)-test:$(VERSION)" -f Dockerfile.test .
