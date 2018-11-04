@@ -9,5 +9,5 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r requirements-test.txt
 
-# Start command.
+# Test command.
 CMD ["mypy", "--ignore-missing-imports", "main.py"]
