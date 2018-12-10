@@ -53,6 +53,6 @@ def upgrade():
 
 def downgrade():
     op.drop_table('tweet_link')
-    op.drop_table('tweet_url')
+    op.drop_table('tweet_symbol')
     op.drop_table('tweet')
     op.drop_table('stock')
