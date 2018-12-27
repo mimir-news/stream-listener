@@ -16,7 +16,6 @@ from app.models import TrackedStock
 
 
 class RankingService(metaclass=ABCMeta):
-
     @abstractmethod
     def rank(self, tweet_content: TweetContent) -> None:
         """Sends tweet contents to be ranked.
@@ -24,63 +23,71 @@ class RankingService(metaclass=ABCMeta):
         :param tweet_content: TweetContent.
         """
 
+
 class MQRankingService(RankingService):
 
-    __log = logging.getLogger('MQRankingService')
+    _log = logging.getLogger("MQRankingService")
 
     def __init__(self, tracked: Dict[str, TrackedStock], config: MQConfig) -> None:
         self.TRACKED_STOCKS = tracked
         self.config = config
-        self.__conn = pika.BlockingConnection(pika.URLParameters(config.URI))
-        self.__channel = self.__conn.channel()
+        self._conn = pika.BlockingConnection(pika.URLParameters(config.URI))
+        self._channel = self._conn.channel()
 
     def __del__(self) -> None:
-        self.__log.info('Closing MQ connection as part of descrutiring')
-        self.__conn.close()
-        self.__log.info('MQ connection closed')
+        self._log.info("Closing MQ connection as part of descrutiring")
+        self._conn.close()
+        self._log.info("MQ connection closed")
 
     def rank(self, tweet_content: TweetContent) -> None:
-        rank_object = self.__create_rank_object(tweet_content)
+        rank_object = self._create_rank_object(tweet_content)
         if should_rank(rank_object):
-            self.__send_to_ranker(rank_object)
+            self._send_to_ranker(rank_object)
 
-    def __send_to_ranker(self, rank_object: Dict) -> None:
-        self.__channel.basic_publish(
+    def _send_to_ranker(self, rank_object: Dict) -> None:
+        self._channel.basic_publish(
             exchange=self.config.EXCHANGE,
             routing_key=self.config.QUEUE_NAME,
             body=json.dumps(rank_object),
-            properties=pika.BasicProperties(content_type='application/json'))
-        self.__log.info('Sent tweet content for ranking')
+            properties=pika.BasicProperties(content_type="application/json"),
+        )
+        self._log.info("Sent tweet content for ranking")
 
-    def __create_rank_object(self, content: TweetContent) -> Dict:
+    def _create_rank_object(self, content: TweetContent) -> Dict:
         subjects = [self.TRACKED_STOCKS[s.symbol] for s in content.symbols]
         return create_rank_object(content, subjects)
 
 
 class RestRankingService(RankingService):
 
-    __log = logging.getLogger('RestRankingService')
+    _log = logging.getLogger("RestRankingService")
 
-    def __init__(self, tracked: Dict[str, TrackedStock], config: NewsRankerConfig) -> None:
+    def __init__(
+        self, tracked: Dict[str, TrackedStock], config: NewsRankerConfig
+    ) -> None:
         self.TRACKED_STOCKS = tracked
-        self.RANK_URL = f'{config.URL}{config.RANK_ROUTE}'
+        self.RANK_URL = f"{config.URL}{config.RANK_ROUTE}"
         self.HEADERS = {
-            'Content-Type': 'application/json',
-            'User-Agent': values.USER_AGENT
+            "Content-Type": "application/json",
+            "User-Agent": values.USER_AGENT,
         }
 
     def rank(self, tweet_content: TweetContent) -> None:
-        rank_object = self.__create_rank_object(tweet_content)
+        rank_object = self._create_rank_object(tweet_content)
         if should_rank(rank_object):
-            self.__send_to_ranker(rank_object)
+            self._send_to_ranker(rank_object)
 
-    def __send_to_ranker(self, rank_object: Dict) -> None:
-        resp = requests.post(self.RANK_URL, data=json.dumps(rank_object),
-                             headers=self.HEADERS, timeout=values.RPC_TIMEOUT)
+    def _send_to_ranker(self, rank_object: Dict) -> None:
+        resp = requests.post(
+            self.RANK_URL,
+            data=json.dumps(rank_object),
+            headers=self.HEADERS,
+            timeout=values.RPC_TIMEOUT,
+        )
         if not resp.ok:
-            self.__log.error(f'Ranking failed: {resp.status_code} - {resp.text}')
+            self._log.error(f"Ranking failed: {resp.status_code} - {resp.text}")
 
-    def __create_rank_object(self, content: TweetContent) -> Dict:
+    def _create_rank_object(self, content: TweetContent) -> Dict:
         subjects = [self.TRACKED_STOCKS[s.symbol] for s in content.symbols]
         return create_rank_object(content, subjects)
 
@@ -94,14 +101,15 @@ def create_rank_object(content: TweetContent, subjects: List[TrackedStock]) -> D
     """
     tweet = content.tweet
     return {
-        'urls': [link.url for link in content.links if allowed_link(link)],
-        'subjects': [sub.asdict() for sub in subjects],
-        'referer': {
-            'externalId': tweet.author_id,
-            'followerCount': tweet.author_followers
+        "urls": [link.url for link in content.links if allowed_link(link)],
+        "subjects": [sub.asdict() for sub in subjects],
+        "referer": {
+            "externalId": tweet.author_id,
+            "followerCount": tweet.author_followers,
         },
-        'language': tweet.language
+        "language": tweet.language,
     }
+
 
 def allowed_link(link: TweetLink) -> bool:
     """Checks if a tweet link points to an allowd domain.
@@ -113,4 +121,4 @@ def allowed_link(link: TweetLink) -> bool:
 
 
 def should_rank(rank_object: Dict) -> bool:
-    return len(rank_object['urls']) > 0
+    return len(rank_object["urls"]) > 0

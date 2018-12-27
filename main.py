@@ -15,7 +15,7 @@ _log = logging.getLogger(__name__)
 def start_heartbeat_thread() -> None:
     """Configures and startes background thead for emiting liveness signs."""
     config = HealthCheckConfig()
-    thread = Thread(target=emit_heartbeats, args=(config.FILENAME, config.INTERVAL,))
+    thread = Thread(target=emit_heartbeats, args=(config.FILENAME, config.INTERVAL))
     thread.setDaemon(True)
     thread.start()
 
@@ -25,9 +25,9 @@ def main() -> None:
         start_heartbeat_thread()
         stream_listner.start()
     except Exception as e:
-        _log.info('Exiting: {}'.format(str(e)))
+        _log.info("Exiting: {}".format(str(e)))
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

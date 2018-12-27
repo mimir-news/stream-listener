@@ -17,21 +17,21 @@ from app.service import MQRankingService
 
 class App:
 
-    __log = logging.getLogger('App')
+    _log = logging.getLogger("App")
 
     def __init__(self) -> None:
-        self.TRACKED_STOCKS = self.__get_tracked_stocks()
-        tweet_svc = self.__setup_tweet_service()
+        self.TRACKED_STOCKS = self._get_tracked_stocks()
+        tweet_svc = self._setup_tweet_service()
         config = TwitterConfig()
         listener = StreamListenerImpl(tweet_svc, config)
-        self.__stream = Stream(self.__setup_auth(config), listener)
+        self._stream = Stream(self._setup_auth(config), listener)
 
     def start(self) -> None:
-        cashtags = [f'${symbol}' for symbol in self.TRACKED_STOCKS.keys()]
-        self.__log.info(f'Starging with symbols: {cashtags}')
-        self.__stream.filter(track=cashtags)
+        cashtags = [f"${symbol}" for symbol in self.TRACKED_STOCKS.keys()]
+        self._log.info(f"Starging with symbols: {cashtags}")
+        self._stream.filter(track=cashtags)
 
-    def __setup_auth(self, config: TwitterConfig) -> OAuthHandler:
+    def _setup_auth(self, config: TwitterConfig) -> OAuthHandler:
         """Sets up auth credentials to listen to twitter stream.
 
         :param config: TwitterConfig to use for authentication.
@@ -42,18 +42,16 @@ class App:
         auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_TOKEN_SECRET)
         return auth
 
-    def __get_tracked_stocks(self) -> Dict[str, TrackedStock]:
+    def _get_tracked_stocks(self) -> Dict[str, TrackedStock]:
         """Get all tracked stocks as a dict with symbols as keys.
 
         :return: Tracked stocks as dict.
         """
         stock_repo = SQLStockRepo()
         stocks = stock_repo.get_all()
-        return {
-            s.symbol: TrackedStock(name=s.name, symbol=s.symbol) for s in stocks
-        }
+        return {s.symbol: TrackedStock(name=s.name, symbol=s.symbol) for s in stocks}
 
-    def __setup_tweet_service(self) -> TweetService:
+    def _setup_tweet_service(self) -> TweetService:
         """Sets up a usable tweet service.
 
         :return: TweetService
@@ -61,4 +59,6 @@ class App:
         filter_svc = SpamFilterService(SpamFilterConfig())
         ranking_svc = MQRankingService(self.TRACKED_STOCKS, MQConfig())
         tweet_repo = SQLTweetRepo()
-        return TweetServiceImpl(self.TRACKED_STOCKS, filter_svc, ranking_svc, tweet_repo)
+        return TweetServiceImpl(
+            self.TRACKED_STOCKS, filter_svc, ranking_svc, tweet_repo
+        )

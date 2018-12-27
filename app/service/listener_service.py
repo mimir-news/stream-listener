@@ -16,22 +16,22 @@ from app.config import values
 class StreamListenerImpl(StreamListener):
     """Stream Listner that uses a tweet service for handling tweets."""
 
-    __log = logging.getLogger('StreamListenerImpl')
+    _log = logging.getLogger("StreamListenerImpl")
 
     def __init__(self, tweet_svc, twitter_config):
-        self.__tweet_svc = tweet_svc
-        self.__error_count = 0
+        self._tweet_svc = tweet_svc
+        self._error_count = 0
         self.RATE_LIMIT_CODE = twitter_config.RATE_LIMIT_CODE
         self.ERROR_PAUSE = twitter_config.ERROR_PAUSE_SECONDS
 
     def on_data(self, data):
-        Thread(target=self.__tweet_svc.handle, args=(data,)).start()
-        self.__error_count = 0
+        Thread(target=self._tweet_svc.handle, args=(data,)).start()
+        self._error_count = 0
 
     def on_error(self, status_code):
-        self.__log.error(f'Encountered error: {status_code}')
-        self.__error_count += 1
-        pause_seconds = self.ERROR_PAUSE * self.__error_count
+        self._log.error(f"Encountered error: {status_code}")
+        self._error_count += 1
+        pause_seconds = self.ERROR_PAUSE * self._error_count
         if status_code == self.RATE_LIMIT_CODE:
             pause_seconds *= 2
         time.sleep(pause_seconds)
@@ -40,14 +40,14 @@ class StreamListenerImpl(StreamListener):
 class StreamLogger(StreamListener):
     """Stream Listnener that logs incomming tweets to the configured log."""
 
-    __log = logging.getLogger('StreamLogger')
+    _log = logging.getLogger("StreamLogger")
 
     def on_data(self, data):
         formated_data = self.__format_data(data)
-        self.__log.info(formated_data)
+        self._log.info(formated_data)
 
     def on_error(self, status_code):
-        self.__log.error(f'Encountered error: {status_code}, exiting')
+        self._log.error(f"Encountered error: {status_code}, exiting")
         sys.exit(1)
 
     def __format_data(self, data):
@@ -57,31 +57,31 @@ class StreamLogger(StreamListener):
 
 class FileStreamer(StreamListener):
 
-    __log = logging.getLogger('FileStreamer')
+    _log = logging.getLogger("FileStreamer")
 
     def __init__(self, output_dir):
         self.output_dir = output_dir
-        self.__create_dir_if_missing(output_dir)
+        self._create_dir_if_missing(output_dir)
 
     def on_data(self, data):
-        id, tweet = self.__format_data(data)
-        self.__save_tweet(id, tweet)
-        self.__log.info(f'Saved tweet: {id}')
+        id, tweet = self._format_data(data)
+        self._save_tweet(id, tweet)
+        self._log.info(f"Saved tweet: {id}")
 
     def on_error(self, status_code):
-        self.__log.error(f'Encountered error: {status_code}, exiting')
+        self._log.error(f"Encountered error: {status_code}, exiting")
         sys.exit(1)
 
-    def __format_data(self, data):
+    def _format_data(self, data):
         deserialized_data = json.loads(data)
         formated_data = json.dumps(deserialized_data, indent=4, sort_keys=True)
-        return deserialized_data['id_str'], formated_data
+        return deserialized_data["id_str"], formated_data
 
-    def __save_tweet(self, name, tweet):
-        filename = os.path.join(self.output_dir, f'{name}.json')
-        with open(filename, 'w+') as f:
+    def _save_tweet(self, name, tweet):
+        filename = os.path.join(self.output_dir, f"{name}.json")
+        with open(filename, "w+") as f:
             f.write(tweet)
 
-    def __create_dir_if_missing(self, output_dir):
+    def _create_dir_if_missing(self, output_dir):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
