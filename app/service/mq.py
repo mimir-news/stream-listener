@@ -14,6 +14,7 @@ class MQConnectionChecker(metaclass=ABCMeta):
     def is_connected(self, health_target: str) -> bool:
         """Returns a boolea inidcating if the underlying MQ connenction is open.
 
+        :param health_target: MQ target to use for health checking.
         :return: Boolean
         """
         raise NotImplementedError()

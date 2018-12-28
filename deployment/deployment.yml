@@ -54,6 +54,8 @@ spec:
               value: x-news
             - name: MQ_QUEUE_NAME
               value: q-rank-objects
+            - name: MQ_HEALTH_TARGET
+              value: q-health-streamlistener
             - name: MQ_HOST
               value: message-queue
             - name: MQ_PORT
