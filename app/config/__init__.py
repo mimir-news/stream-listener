@@ -11,9 +11,6 @@ from app.config import values
 from app.config import util
 
 
-TEST_MODE: bool = bool(os.environ["TEST_MODE"]) if "TEST_MODE" in os.environ else False
-
-
 class DBConfig:
     URI = util.get_database_uri()
     ECHO = False
@@ -39,11 +36,13 @@ class NewsRankerConfig:
 
 
 class MQConfig:
+    TEST_MODE = os.environ.get("MQ_TEST_MODE") in ["True", "1"]
     EXCHANGE = util.getenv("MQ_EXCHANGE")
     QUEUE_NAME = util.getenv("MQ_QUEUE_NAME")
     URI = util.get_mq_uri()
 
 
 class HealthCheckConfig:
+    MQ_HEALTH_TARGET = util.getenv("MQ_HEALTH_TARGET")
     FILENAME = util.getenv("HEARTBEAT_FILE")
     INTERVAL = int(util.getenv("HEARTBEAT_INTERVAL"))

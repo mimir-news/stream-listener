@@ -1,20 +1,31 @@
 # Standard library
+import logging
 import time
 from pathlib import Path
+
+# Internal modules
+from app.config import HealthCheckConfig
 
 # Exported classes
 from .filter_service import FilterService, SpamFilterService
 from .listener_service import StreamLogger, StreamListenerImpl, FileStreamer
 from .ranking_service import RankingService, RestRankingService, MQRankingService
+from .mq import MQConnectionChecker, MQConnectionFactory
 from .tweet_service import TweetService, TweetServiceImpl
 
 
-def emit_heartbeats(filepath: str, interval_seconds: int) -> None:
+_log = logging.getLogger("Heartbeat")
+
+
+def emit_heartbeats(config: HealthCheckConfig, checker: MQConnectionChecker) -> None:
     """Touch a file to inform healthcheckers that the service is running.
 
-    :param filepath: Full path to the file to touch.
-    :param interval_seconds: Interval of emiting lifesigns in seconds.
+    :param config: HealthCheckConfig
+    :param checker: MQConnectionChecker
     """
     while True:
-        Path(filepath).touch()
-        time.sleep(interval_seconds)
+        if checker.is_connected(config.MQ_HEALTH_TARGET):
+            Path(config.FILENAME).touch()
+        else:
+            _log.warn("MQ connection is closed.")
+        time.sleep(config.INTERVAL)

@@ -13,6 +13,7 @@ export MQ_USER=streamlistener
 export MQ_PASSWORD=password
 export MQ_HOST=localhost
 export MQ_PORT=5672
+export MQ_HEALTH_TARGET=q-health-streamlistener
 
 export HEARTBEAT_FILE=/tmp/stream-listener-health.txt
 export HEARTBEAT_INTERVAL=20

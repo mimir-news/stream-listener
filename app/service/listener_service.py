@@ -4,7 +4,7 @@ import json
 import os
 import time
 import sys
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 
 # 3rd party modules
 from tweepy.streaming import StreamListener
@@ -19,13 +19,14 @@ class StreamListenerImpl(StreamListener):
     _log = logging.getLogger("StreamListenerImpl")
 
     def __init__(self, tweet_svc, twitter_config):
+        self._excutor = ThreadPoolExecutor(max_workers=values.THREAD_POOL_SIZE)
         self._tweet_svc = tweet_svc
         self._error_count = 0
         self.RATE_LIMIT_CODE = twitter_config.RATE_LIMIT_CODE
         self.ERROR_PAUSE = twitter_config.ERROR_PAUSE_SECONDS
 
     def on_data(self, data):
-        Thread(target=self._tweet_svc.handle, args=(data,)).start()
+        self._excutor.submit(self._tweet_svc.handle, data)
         self._error_count = 0
 
     def on_error(self, status_code):

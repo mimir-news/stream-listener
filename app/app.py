@@ -13,15 +13,16 @@ from app.service import StreamListenerImpl
 from app.service import TweetService, TweetServiceImpl
 from app.service import SpamFilterService
 from app.service import MQRankingService
+from app.service import MQConnectionFactory
 
 
 class App:
 
     _log = logging.getLogger("App")
 
-    def __init__(self) -> None:
+    def __init__(self, mq_connector: MQConnectionFactory) -> None:
         self.TRACKED_STOCKS = self._get_tracked_stocks()
-        tweet_svc = self._setup_tweet_service()
+        tweet_svc = self._setup_tweet_service(mq_connector)
         config = TwitterConfig()
         listener = StreamListenerImpl(tweet_svc, config)
         self._stream = Stream(self._setup_auth(config), listener)
@@ -51,13 +52,13 @@ class App:
         stocks = stock_repo.get_all()
         return {s.symbol: TrackedStock(name=s.name, symbol=s.symbol) for s in stocks}
 
-    def _setup_tweet_service(self) -> TweetService:
+    def _setup_tweet_service(self, mq_connector: MQConnectionFactory) -> TweetService:
         """Sets up a usable tweet service.
 
         :return: TweetService
         """
         filter_svc = SpamFilterService(SpamFilterConfig())
-        ranking_svc = MQRankingService(self.TRACKED_STOCKS, MQConfig())
+        ranking_svc = MQRankingService(self.TRACKED_STOCKS, MQConfig(), mq_connector)
         tweet_repo = SQLTweetRepo()
         return TweetServiceImpl(
             self.TRACKED_STOCKS, filter_svc, ranking_svc, tweet_repo

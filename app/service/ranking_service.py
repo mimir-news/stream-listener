@@ -13,6 +13,7 @@ import pika
 from app.config import values, NewsRankerConfig, MQConfig
 from app.models import TweetContent, Tweet, TweetLink, TweetSymbol
 from app.models import TrackedStock
+from .mq import MQConnectionFactory
 
 
 class RankingService(metaclass=ABCMeta):
@@ -28,15 +29,21 @@ class MQRankingService(RankingService):
 
     _log = logging.getLogger("MQRankingService")
 
-    def __init__(self, tracked: Dict[str, TrackedStock], config: MQConfig) -> None:
+    def __init__(
+        self,
+        tracked: Dict[str, TrackedStock],
+        config: MQConfig,
+        factory: MQConnectionFactory,
+    ) -> None:
         self.TRACKED_STOCKS = tracked
-        self.config = config
-        self._conn = pika.BlockingConnection(pika.URLParameters(config.URI))
-        self._channel = self._conn.channel()
+        self.EXCHANGE = config.EXCHANGE
+        self.QUEUE_NAME = config.QUEUE_NAME
+        self._connection_factory = factory
+        self._channel = self._connection_factory.get_channel()
 
     def __del__(self) -> None:
         self._log.info("Closing MQ connection as part of descrutiring")
-        self._conn.close()
+        self._connection_factory.close()
         self._log.info("MQ connection closed")
 
     def rank(self, tweet_content: TweetContent) -> None:
@@ -46,8 +53,8 @@ class MQRankingService(RankingService):
 
     def _send_to_ranker(self, rank_object: Dict) -> None:
         self._channel.basic_publish(
-            exchange=self.config.EXCHANGE,
-            routing_key=self.config.QUEUE_NAME,
+            exchange=self.EXCHANGE,
+            routing_key=self.QUEUE_NAME,
             body=json.dumps(rank_object),
             properties=pika.BasicProperties(content_type="application/json"),
         )

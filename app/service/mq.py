@@ -1,4 +1,5 @@
 # Standard library
+import logging
 from abc import ABCMeta, abstractmethod
 
 # 3rd party modules
@@ -10,7 +11,7 @@ from app.config import MQConfig
 
 
 class MQConnectionChecker(metaclass=ABCMeta):
-    def is_connected(self) -> bool:
+    def is_connected(self, health_target: str) -> bool:
         """Returns a boolea inidcating if the underlying MQ connenction is open.
 
         :return: Boolean
@@ -19,10 +20,13 @@ class MQConnectionChecker(metaclass=ABCMeta):
 
 
 class MQConnectionFactory(MQConnectionChecker):
+
+    _log = logging.getLogger("MQConnectionFactory")
+
     def __init__(self, config: MQConfig) -> None:
         self.TEST_MODE = config.TEST_MODE
         if not self.TEST_MODE:
-            connection_params = pika.URLParameters(config.URI())
+            connection_params = pika.URLParameters(config.URI)
             self._conn = pika.BlockingConnection(connection_params)
             self._channel = self._conn.channel()
         else:
@@ -37,5 +41,11 @@ class MQConnectionFactory(MQConnectionChecker):
     def get_channel(self) -> Channel:
         return self._channel
 
-    def is_connected(self) -> bool:
-        return self._conn.is_open()
+    def is_connected(self, health_target: str) -> bool:
+        try:
+            self._channel.queue_declare(queue=health_target, passive=True)
+            return True
+        except Exception as e:
+            self._log.error(e)
+            return False
+
