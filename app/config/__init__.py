@@ -31,12 +31,12 @@ class SpamFilterConfig:
 
 
 class NewsRankerConfig:
-    URL = util.getenv("NEWS_RANKER_URL")
+    URL = os.getenv("NEWS_RANKER_URL")
     RANK_ROUTE = "/v1/article"
 
 
 class MQConfig:
-    TEST_MODE = os.environ.get("MQ_TEST_MODE") in ["True", "1"]
+    TEST_MODE = os.getenv("MQ_TEST_MODE") in ["True", "1"]
     EXCHANGE = util.getenv("MQ_EXCHANGE")
     QUEUE_NAME = util.getenv("MQ_QUEUE_NAME")
     URI = util.get_mq_uri()

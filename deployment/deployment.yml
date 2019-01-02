@@ -83,3 +83,6 @@ spec:
                 - test
                 - '`find /tmp/stream-listener-health.txt -mmin 1`'
             initialDelaySeconds: 60
+          imagePullPolicy: Always
+      imagePullSecrets:
+        - name: gcr-json-key
