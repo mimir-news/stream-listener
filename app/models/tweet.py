@@ -1,7 +1,7 @@
 # Standard library
-from dataclasses import dataclass # Backport for support of python 3.7 dataclasses
+from dataclasses import dataclass  # Backport for support of python 3.7 dataclasses
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from uuid import uuid4
 
 # 3rd party modules
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from app import db
 
 
-class Tweet(db.Model): # type: ignore
-    __tablename__ = 'tweet'
+class Tweet(db.Model):  # type: ignore
+    __tablename__ = "tweet"
 
     id = sa.Column(sa.String(50), primary_key=True)
     text = sa.Column(sa.String(500))
@@ -21,9 +21,15 @@ class Tweet(db.Model): # type: ignore
     author_followers = sa.Column(sa.Integer)
     created_at = sa.Column(sa.DateTime)
 
-    def __init__(self, text: str, language: str, author_id: str,
-                 author_followers: int, id: str = None) -> None:
-        self.id = id or str(uuid4()).upper()
+    def __init__(
+        self,
+        text: str,
+        language: str,
+        author_id: str,
+        author_followers: int,
+        id: Optional[str] = None,
+    ) -> None:
+        self.id = id or str(uuid4()).lower()
         self.text = text
         self.language = language
         self.author_id = author_id
@@ -31,42 +37,51 @@ class Tweet(db.Model): # type: ignore
         self.created_at = datetime.utcnow()
 
     def __repr__(self) -> str:
-        return ('Tweet(id={} text={} language={} author_id={} '
-                'author_followers={} created_at={})'.format(
-                self.id, self.text, self.language, self.author_id,
-                self.author_followers, self.created_at))
+        return (
+            "Tweet(id={} text={} language={} author_id={} "
+            "author_followers={} created_at={})".format(
+                self.id,
+                self.text,
+                self.language,
+                self.author_id,
+                self.author_followers,
+                self.created_at,
+            )
+        )
 
 
-class TweetLink(db.Model): # type: ignore
-    __tablename__ = 'tweet_link'
+class TweetLink(db.Model):  # type: ignore
+    __tablename__ = "tweet_link"
 
     id = sa.Column(sa.Integer, primary_key=True)
     url = sa.Column(sa.String(200))
-    tweet_id = sa.Column(sa.String(50), sa.ForeignKey('tweet.id'))
+    tweet_id = sa.Column(sa.String(50), sa.ForeignKey("tweet.id"))
 
     def __init__(self, url: str, tweet_id: str) -> None:
         self.url = url
         self.tweet_id = tweet_id
 
     def __repr__(self) -> str:
-        return 'TweetLink(id={} url={} tweet_id={})'\
-                .format(self.id, self.url, self.tweet_id)
+        return "TweetLink(id={} url={} tweet_id={})".format(
+            self.id, self.url, self.tweet_id
+        )
 
 
-class TweetSymbol(db.Model): # type: ignore
-    __tablename__ = 'tweet_symbol'
+class TweetSymbol(db.Model):  # type: ignore
+    __tablename__ = "tweet_symbol"
 
     def __init__(self, symbol: str, tweet_id: str) -> None:
         self.symbol = symbol
         self.tweet_id = tweet_id
 
     id = sa.Column(sa.Integer, primary_key=True)
-    symbol = sa.Column(sa.String(20), sa.ForeignKey('stock.symbol'))
-    tweet_id = sa.Column(sa.String(50), sa.ForeignKey('tweet.id'))
+    symbol = sa.Column(sa.String(20), sa.ForeignKey("stock.symbol"))
+    tweet_id = sa.Column(sa.String(50), sa.ForeignKey("tweet.id"))
 
     def __repr__(self) -> str:
-        return 'TweetSymbol(id={} symbol={} tweet_id={})'\
-                .format(self.id, self.symbol, self.tweet_id)
+        return "TweetSymbol(id={} symbol={} tweet_id={})".format(
+            self.id, self.symbol, self.tweet_id
+        )
 
 
 @dataclass(frozen=True)
