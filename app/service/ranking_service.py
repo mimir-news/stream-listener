@@ -52,13 +52,16 @@ class MQRankingService(RankingService):
             self._send_to_ranker(rank_object)
 
     def _send_to_ranker(self, rank_object: Dict) -> None:
-        self._channel.basic_publish(
-            exchange=self.EXCHANGE,
-            routing_key=self.QUEUE_NAME,
-            body=json.dumps(rank_object),
-            properties=pika.BasicProperties(content_type="application/json"),
-        )
-        self._log.info("Sent tweet content for ranking")
+        try:
+            self._channel.basic_publish(
+                exchange=self.EXCHANGE,
+                routing_key=self.QUEUE_NAME,
+                body=json.dumps(rank_object),
+                properties=pika.BasicProperties(content_type="application/json"),
+            )
+        except Exception as e:
+            self._log.error(f"Ranking failed: {e}")
+            raise e
 
     def _create_rank_object(self, content: TweetContent) -> Dict:
         subjects = [self.TRACKED_STOCKS[s.symbol] for s in content.symbols]

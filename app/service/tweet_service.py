@@ -14,6 +14,10 @@ from app.service import FilterService
 from app.repository import TweetRepo
 
 
+_ACTION_FILTERED_SPAM = "tweet filtered out as SPAM"
+_ACTION_SUCCESS = "tweet stored and sent for ranking"
+
+
 class TweetService(metaclass=ABCMeta):
     """Interface for handling incomming raw tweets."""
 
@@ -44,10 +48,11 @@ class TweetServiceImpl(TweetService):
     def handle(self, raw_tweet: bytes) -> None:
         content = self._parse_tweet_contents(raw_tweet)
         if self._filter_svc.is_spam(content.tweet):
-            self._log.info(f"SPAM: {content.tweet}")
+            self._log_tweet_handling(content, _ACTION_FILTERED_SPAM)
             return
         self._save_content(content)
         self._ranking_svc.rank(content)
+        self._log_tweet_handling(content, _ACTION_SUCCESS)
 
     def _parse_tweet_contents(self, raw_tweet) -> TweetContent:
         """Parses a raw tweet dict into a tweet, links and symbols.
@@ -143,3 +148,11 @@ class TweetServiceImpl(TweetService):
         self._tweet_repo.save_tweet(tweet_content.tweet)
         self._tweet_repo.save_links(tweet_content.links)
         self._tweet_repo.save_symbols(tweet_content.symbols)
+
+    def _log_tweet_handling(self, content: TweetContent, action: str) -> None:
+        """Logs how a tweet was handled.
+
+        :param content: TweetContent that was handled.
+        :param action: String describing the action taken on the tweet.
+        """
+        self._log.info(f"tweetId: [{content.tweet.id}] action: [{action}]")

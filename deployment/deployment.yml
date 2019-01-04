@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: stream-listener
-          image: eu.gcr.io/mimir-185212/stream-listener:3.0
+          image: eu.gcr.io/mimir-185212/stream-listener:3.1
           env:
             - name: DB_HOST
               value: mimir-db
