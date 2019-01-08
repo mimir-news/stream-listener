@@ -148,6 +148,7 @@ class TweetServiceImpl(TweetService):
 
         :param tweet_content: TweetContent to store.
         """
+        tweet_id = tweet_content.tweet.id
         self._log.debug(f"id=[{tweet_id}] step=[saving tweet]")
         self._tweet_repo.save_tweet(tweet_content.tweet)
         self._log.debug(f"id=[{tweet_id}] step=[saving tweet links]")
