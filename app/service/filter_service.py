@@ -42,7 +42,7 @@ class SpamFilterService(FilterService):
         if not resp.ok:
             self._log.error(f"Ranking failed: {resp.status_code} - {resp.text}")
             return False
-        return self._tweet_was_spam(resp)
+        return self._tweet_was_spam(tweet, resp)
 
     def _create_spam_body(self, tweet: Tweet) -> Dict[str, str]:
         """Formats a tweet into a spam candidate.
@@ -63,14 +63,16 @@ class SpamFilterService(FilterService):
             values.REQUEST_ID_HEADER: request_id,
         }
 
-    def _tweet_was_spam(self, resp: requests.Response) -> bool:
+    def _tweet_was_spam(self, tweet: Tweet, resp: requests.Response) -> bool:
         """Parses spam filter response to check if spam was detected.
 
+        :param tweet: Tweet sent for filtering.
         :param resp: Spam filter response.
         :return: Boolean indicating if tweet is spam.
         """
         try:
             resp_body = resp.json()
+            self._log.info(f"spam-filter response: [{resp_body}] tweetId: [{tweet.id}]")
             return resp_body["label"] == values.SPAM_LABEL
         except Exception as e:
             self._log.error(str(e))
