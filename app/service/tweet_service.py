@@ -47,10 +47,13 @@ class TweetServiceImpl(TweetService):
 
     def handle(self, raw_tweet: bytes) -> None:
         content = self._parse_tweet_contents(raw_tweet)
+        tweet_id = content.tweet.id
+        self._log.debug(f"id=[{tweet_id}] step=[calling spam filter]")
         if self._filter_svc.is_spam(content.tweet):
             self._log_tweet_handling(content, _ACTION_FILTERED_SPAM)
             return
         self._save_content(content)
+        self._log.debug(f"id=[{tweet_id}] step=[sending for ranking]")
         self._ranking_svc.rank(content)
         self._log_tweet_handling(content, _ACTION_SUCCESS)
 
@@ -145,8 +148,11 @@ class TweetServiceImpl(TweetService):
 
         :param tweet_content: TweetContent to store.
         """
+        self._log.debug(f"id=[{tweet_id}] step=[saving tweet]")
         self._tweet_repo.save_tweet(tweet_content.tweet)
+        self._log.debug(f"id=[{tweet_id}] step=[saving tweet links]")
         self._tweet_repo.save_links(tweet_content.links)
+        self._log.debug(f"id=[{tweet_id}] step=[saving tweet symbols]")
         self._tweet_repo.save_symbols(tweet_content.symbols)
 
     def _log_tweet_handling(self, content: TweetContent, action: str) -> None:

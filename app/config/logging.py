@@ -11,7 +11,7 @@ LOGGING_CONIFG = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "default",
-            "level": logging.INFO,
+            "level": logging.DEBUG,
         }
     },
     "root": {"handlers": ["console"], "level": logging.DEBUG},

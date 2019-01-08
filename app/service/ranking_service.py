@@ -50,6 +50,8 @@ class MQRankingService(RankingService):
         rank_object = self._create_rank_object(tweet_content)
         if should_rank(rank_object):
             self._send_to_ranker(rank_object)
+        else:
+            self._log.debug(f"id=[{tweet_content.tweet.id}] step=[skipping ranking]")
 
     def _send_to_ranker(self, rank_object: Dict) -> None:
         try:
