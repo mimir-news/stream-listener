@@ -45,3 +45,6 @@ build:
 
 build-test:
 	docker build -t "$(NAME)-test:$(VERSION)" -f Dockerfile.test .
+
+deploy:
+	kubectl apply -f deployment/

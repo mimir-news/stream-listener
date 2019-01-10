@@ -15,7 +15,7 @@ from app.repository import TweetRepo
 
 
 _ACTION_FILTERED_SPAM = "tweet filtered out as SPAM"
-_ACTION_SUCCESS = "tweet stored and sent for ranking"
+_ACTION_SUCCESS = "successfully handled tweet"
 
 
 class TweetService(metaclass=ABCMeta):
@@ -165,4 +165,4 @@ class TweetServiceImpl(TweetService):
         :param content: TweetContent that was handled.
         :param action: String describing the action taken on the tweet.
         """
-        self._log.info(f"tweetId: [{content.tweet.id}] action: [{action}]")
+        self._log.info(f"id=[{content.tweet.id}] action=[{action}]")
