@@ -53,7 +53,6 @@ class TweetServiceImpl(TweetService):
             self._log_tweet_handling(content, _ACTION_FILTERED_SPAM)
             return
         self._save_content(content)
-        self._log.info(f"id=[{tweet_id}] step=[sending for ranking]")
         self._ranking_svc.rank(content)
         self._log_tweet_handling(content, _ACTION_SUCCESS)
 

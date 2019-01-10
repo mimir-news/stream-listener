@@ -49,6 +49,7 @@ class MQRankingService(RankingService):
     def rank(self, tweet_content: TweetContent) -> None:
         rank_object = self._create_rank_object(tweet_content)
         if should_rank(rank_object):
+            self._log.info(f"id=[{tweet_content.tweet.id}] step=[sending for ranking]")
             self._send_to_ranker(rank_object)
         else:
             self._log.info(f"id=[{tweet_content.tweet.id}] step=[skipping ranking]")
