@@ -72,7 +72,7 @@ class SpamFilterService(FilterService):
         """
         try:
             resp_body = resp.json()
-            self._log.info(f"spam-filter response: [{resp_body}] tweetId: [{tweet.id}]")
+            self._log.info(f"id=[{tweet.id}] response=[{resp_body}] ")
             return resp_body["label"] == values.SPAM_LABEL
         except Exception as e:
             self._log.error(str(e))

@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: stream-listener
-          image: eu.gcr.io/mimir-185212/stream-listener:3.2.2
+          image: eu.gcr.io/mimir-185212/stream-listener:3.2.3
           env:
             - name: DB_HOST
               value: db-pooler
