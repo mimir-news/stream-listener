@@ -52,7 +52,7 @@ class TweetServiceImpl(TweetService):
         if self._filter_svc.is_spam(content.tweet):
             self._log_tweet_handling(content, _ACTION_FILTERED_SPAM)
             return
-        self._save_content(content)
+        self._tweet_repo.save_tweet_content(content)
         self._ranking_svc.rank(content)
         self._log_tweet_handling(content, _ACTION_SUCCESS)
 
@@ -141,22 +141,6 @@ class TweetServiceImpl(TweetService):
             return []
         entities = component["entities"]
         return [symbol["text"].upper() for symbol in entities["symbols"]]
-
-    def _save_content(self, tweet_content: TweetContent) -> None:
-        """Stores tweet, links and symbols from a raw tweet.
-
-        :param tweet_content: TweetContent to store.
-        """
-        try:
-            tweet_id = tweet_content.tweet.id
-            self._log.info(f"id=[{tweet_id}] step=[saving tweet]")
-            self._tweet_repo.save_tweet(tweet_content.tweet)
-            self._log.info(f"id=[{tweet_id}] step=[saving tweet links]")
-            self._tweet_repo.save_links(tweet_content.links)
-            self._log.info(f"id=[{tweet_id}] step=[saving tweet symbols]")
-            self._tweet_repo.save_symbols(tweet_content.symbols)
-        except Exception as e:
-            self._log.error(str(e))
 
     def _log_tweet_handling(self, content: TweetContent, action: str) -> None:
         """Logs how a tweet was handled.

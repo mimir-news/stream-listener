@@ -54,7 +54,7 @@ class TweetLink(db.Model):  # type: ignore
     __tablename__ = "tweet_link"
 
     id = sa.Column(sa.Integer, primary_key=True)
-    url = sa.Column(sa.String(200))
+    url = sa.Column(sa.String(400))
     tweet_id = sa.Column(sa.String(50), sa.ForeignKey("tweet.id"))
 
     def __init__(self, url: str, tweet_id: str) -> None:
