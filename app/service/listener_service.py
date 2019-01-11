@@ -30,12 +30,15 @@ class StreamListenerImpl(StreamListener):
         self._error_count = 0
 
     def on_error(self, status_code):
-        self._log.error(f"Encountered error: {status_code}")
+        rate_limited = status_code == self.RATE_LIMIT_CODE
         self._error_count += 1
-        pause_seconds = self.ERROR_PAUSE * self._error_count
-        if status_code == self.RATE_LIMIT_CODE:
-            pause_seconds *= 2
+        pause_seconds = self.ERROR_PAUSE * self._error_count * (1 + int(rate_limited))
+        self._log.error(
+            f"error=[{status_code}] rate_limited=[{rate_limited}]"
+            f"error_count=[{self._error_count}] pause=[{pause_seconds} s.]"
+        )
         time.sleep(pause_seconds)
+        self._log.info(f"error pause done")
 
 
 class StreamLogger(StreamListener):
