@@ -1,88 +1,157 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: stream-listener
   labels:
     app: stream-listener
+  name: stream-listener
 spec:
   replicas: 1
   template:
     metadata:
+      annotations:
+        linkerd.io/created-by: linkerd/cli stable-2.1.0
+        linkerd.io/proxy-version: stable-2.1.0
       labels:
         app: stream-listener
+        linkerd.io/control-plane-ns: linkerd
+        linkerd.io/proxy-deployment: stream-listener
     spec:
       containers:
-        - name: stream-listener
-          image: eu.gcr.io/mimir-185212/stream-listener:3.3
-          env:
-            - name: DB_HOST
-              value: db-pooler
-            - name: DB_PORT
-              value: "5432"
-            - name: DB_NAME
-              value: streamlistener
-            - name: DB_USERNAME
-              value: streamlistener
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: db-credentials
-                  key: streamlistener.password
-            - name: TWITTER_CONSUMER_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: twitter-api-credentials
-                  key: consumerKey
-            - name: TWITTER_CONSUMER_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: twitter-api-credentials
-                  key: consumerSecret
-            - name: TWITTER_ACCESS_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: twitter-api-credentials
-                  key: accessToken
-            - name: TWITTER_ACCESS_TOKEN_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: twitter-api-credentials
-                  key: accessSecret
-            - name: SPAM_FILTER_URL
-              value: http://spam-filter:8080
-            - name: MQ_EXCHANGE
-              value: x-news
-            - name: MQ_QUEUE_NAME
-              value: q-rank-objects
-            - name: MQ_HEALTH_TARGET
-              value: q-health-streamlistener
-            - name: MQ_HOST
-              value: message-queue
-            - name: MQ_PORT
-              value: "5672"
-            - name: MQ_USER
-              value: streamlistener
-            - name: MQ_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mq-credentials
-                  key: streamlistener.password
-            - name: HEARTBEAT_FILE
-              value: "/tmp/stream-listener-health.txt"
-            - name: HEARTBEAT_INTERVAL
-              value: "20"
-          readinessProbe:
-            exec:
-              command:
-                - test
-                - '`find /tmp/stream-listener-health.txt -mmin 1`'
-            initialDelaySeconds: 40
-          livenessProbe:
-            exec:
-              command:
-                - test
-                - '`find /tmp/stream-listener-health.txt -mmin 1`'
-            initialDelaySeconds: 60
-          imagePullPolicy: Always
+      - name: stream-listener
+        image: eu.gcr.io/mimir-185212/stream-listener:3.3
+        env:
+        - name: DB_HOST
+          value: db-pooler
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: streamlistener
+        - name: DB_USERNAME
+          value: streamlistener
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: streamlistener.password
+              name: db-credentials
+        - name: TWITTER_CONSUMER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: consumerKey
+              name: twitter-api-credentials
+        - name: TWITTER_CONSUMER_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: consumerSecret
+              name: twitter-api-credentials
+        - name: TWITTER_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: accessToken
+              name: twitter-api-credentials
+        - name: TWITTER_ACCESS_TOKEN_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: accessSecret
+              name: twitter-api-credentials
+        - name: SPAM_FILTER_URL
+          value: http://spam-filter:8080
+        - name: MQ_EXCHANGE
+          value: x-news
+        - name: MQ_QUEUE_NAME
+          value: q-rank-objects
+        - name: MQ_HEALTH_TARGET
+          value: q-health-streamlistener
+        - name: MQ_HOST
+          value: message-queue
+        - name: MQ_PORT
+          value: "5672"
+        - name: MQ_USER
+          value: streamlistener
+        - name: MQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: streamlistener.password
+              name: mq-credentials
+        - name: HEARTBEAT_FILE
+          value: /tmp/stream-listener-health.txt
+        - name: HEARTBEAT_INTERVAL
+          value: "20"
+        imagePullPolicy: Always
+        livenessProbe:
+          exec:
+            command:
+            - test
+            - '`find /tmp/stream-listener-health.txt -mmin 1`'
+          initialDelaySeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - test
+            - '`find /tmp/stream-listener-health.txt -mmin 1`'
+          initialDelaySeconds: 20
+        resources: {}
+      - name: linkerd-proxy
+        ports:
+        - containerPort: 4143
+          name: linkerd-proxy
+        - containerPort: 4191
+          name: linkerd-metrics
+        env:
+        - name: LINKERD2_PROXY_LOG
+          value: warn,linkerd2_proxy=info
+        - name: LINKERD2_PROXY_BIND_TIMEOUT
+          value: 10s
+        - name: LINKERD2_PROXY_CONTROL_URL
+          value: tcp://linkerd-proxy-api.linkerd.svc.cluster.local:8086
+        - name: LINKERD2_PROXY_CONTROL_LISTENER
+          value: tcp://0.0.0.0:4190
+        - name: LINKERD2_PROXY_METRICS_LISTENER
+          value: tcp://0.0.0.0:4191
+        - name: LINKERD2_PROXY_OUTBOUND_LISTENER
+          value: tcp://127.0.0.1:4140
+        - name: LINKERD2_PROXY_INBOUND_LISTENER
+          value: tcp://0.0.0.0:4143
+        - name: LINKERD2_PROXY_DESTINATION_PROFILE_SUFFIXES
+          value: .
+        - name: LINKERD2_PROXY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: gcr.io/linkerd-io/proxy:stable-2.1.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 4191
+          initialDelaySeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 4191
+          initialDelaySeconds: 10
+        resources: {}
+        securityContext:
+          runAsUser: 2102
+        terminationMessagePolicy: FallbackToLogsOnError
       imagePullSecrets:
-        - name: gcr-json-key
+      - name: gcr-json-key
+      initContainers:
+      - args:
+        - --incoming-proxy-port
+        - "4143"
+        - --outgoing-proxy-port
+        - "4140"
+        - --proxy-uid
+        - "2102"
+        - --inbound-ports-to-ignore
+        - 4190,4191
+        image: gcr.io/linkerd-io/proxy-init:stable-2.1.0
+        imagePullPolicy: IfNotPresent
+        name: linkerd-init
+        resources: {}
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+          privileged: false
+        terminationMessagePolicy: FallbackToLogsOnError
