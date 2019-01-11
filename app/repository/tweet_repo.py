@@ -34,7 +34,6 @@ class SQLTweetRepo(TweetRepo):
             success_steps.append("saving links")
             self._save_symbols(content.symbols)
             success_steps.append("saving symbols")
-            db.session.commit()
             self._log.info(f"id=[{tweet_id}] succeded=[{success_steps}]")
         except Exception as e:
             self._log.error(
@@ -44,11 +43,14 @@ class SQLTweetRepo(TweetRepo):
 
     def _save_tweet(self, tweet: Tweet) -> None:
         db.session.add(tweet)
+        db.session.commit()
 
     def _save_links(self, links: List[TweetLink]) -> None:
         for link in links:
             db.session.add(link)
+        db.session.commit()
 
     def _save_symbols(self, symbols: List[TweetSymbol]) -> None:
         for symbol in symbols:
             db.session.add(symbol)
+        db.session.commit()
